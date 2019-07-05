@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/">
+        <file>wordLists/adjectiveWordList.json</file>
+        <file>wordLists/locationWordList.json</file>
+        <file>wordLists/objectsWordList.json</file>
+        <file>wordLists/verbsWordList.json</file>
+        <file>action.cpp</file>
+        <file>action.h</file>
+        <file>actiontype.h</file>
+        <file>device.cpp</file>
+        <file>device.h</file>
+        <file>devicemanager.cpp</file>
+        <file>devicemanager.h</file>
+        <file>main.cpp</file>
+        <file>syntaxhelper.cpp</file>
+        <file>syntaxhelper.h</file>
+        <file>vikaword.h</file>
+    </qresource>
+</RCC>

@@ -5,6 +5,8 @@ QT += network
 
 requires(qtConfig(udpsocket))
 
+include ($$PWD/libs/qMDNS/qMDNS.pri)
+
 CONFIG += c++11 console
 CONFIG -= app_bundle
 

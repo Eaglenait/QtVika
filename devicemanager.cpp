@@ -6,20 +6,29 @@ DeviceManager::DeviceManager(QObject *parent)
     : QObject (parent)
     , manager(new QNetworkAccessManager(this))
     , multicastAddressv4(QStringLiteral("224.0.0.251"))
-    , multicastAddressv6(QStringLiteral("ff12::2115"))
 {
-    bool bindv4Result = socketv4.bind(QHostAddress(QHostAddress::AnyIPv4), 0);
-    bool bindv6Result = socketv6.bind(QHostAddress(QHostAddress::AnyIPv6), socketv4.localPort());
-    if(!bindv4Result)
-        qDebug() << "Multicast ipv4 bind error";
+    bool bindResult = UDPsocket.bind(QHostAddress(QHostAddress::Any), 0);
+    if(!bindResult)
+        qDebug() << "Multicast bind error";
     else
-        qDebug() << "Multicast bind ipv4 success";
+        qDebug() << "Multicast bind success";
 
-    if(!bindv6Result)
-        qDebug() << "Multicast ipv6 bind error";
-    else
-        qDebug() << "Multicast bind ipv6 success";
+    connect(qMDNS::getInstance()
+            , &qMDNS::hostFound
+            , this
+            , &DeviceManager::HostFound);
+}
 
+DeviceManager::~DeviceManager() {
+}
+
+void DeviceManager::FindService(const QString& service) {
+    qDebug() << "finding service :" << service;
+    qMDNS::getInstance()->lookup(service);
+}
+
+void DeviceManager::HostFound(const QHostInfo& info) const {
+    qDebug() << "mdns host found on addr: " << info.addresses().first();
 }
 
 QVector<VikaSyntax> DeviceManager::GetConfig(QHostAddress addr) {
@@ -46,8 +55,7 @@ QVector<VikaSyntax> DeviceManager::GetConfig(QHostAddress addr) {
 
       replyMessage = reply->readAll();
       qDebug() << "answer : " << replyMessage;
-    }
-    );
+    });
 
     qDebug() << "getConfig response : " << replyMessage;
 
@@ -93,9 +101,8 @@ void DeviceManager::AdvertiseServer() {
   qDebug() << "Advertising server";
   QByteArray datagram = "Vika Server Advertisement";
 
-  socketv4.writeDatagram(datagram, multicastAddressv4, 45454);
-  if(socketv6.state() == QAbstractSocket::BoundState)
-    socketv6.writeDatagram(datagram, multicastAddressv6, 45454);
+  UDPsocket.writeDatagram(datagram, multicastAddressv4, 45454);
+
 }
 
 int DeviceManager::isAlive() const {
@@ -106,7 +113,4 @@ int DeviceManager::isAlive() const {
 
     //TODO: Return number of devices removed ? (or device currently alive)
     return 0;
-}
-
-void DeviceManager::DebugPrint() const {
 }

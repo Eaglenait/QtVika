@@ -10,10 +10,9 @@ int main(int argc, char *argv[])
 {
   QCoreApplication a(argc, argv);
   Q_INIT_RESOURCE(resources);
+
   SyntaxHelper sh;
   DeviceManager *dm = new DeviceManager();
-  EchoServer *server = new EchoServer(80, true);
-  QObject::connect(server, &EchoServer::closed, &a, &QCoreApplication::quit);
 
   QTextStream qtin(stdin);
 
@@ -27,6 +26,12 @@ int main(int argc, char *argv[])
       if(sentence[0] == "exit") {
         return 0;
       }
+      if(sentence[0].startsWith("mdns")){
+        qDebug() << "mdns";
+        auto gne = sentence[0].split(';');
+        dm->FindService(gne[1]);
+        continue;
+      }
       if(sentence[0].startsWith("getconfig")) {
         QVector<VikaSyntax> sy;
         if(sentence[0].contains(';')) {
@@ -35,7 +40,7 @@ int main(int argc, char *argv[])
           QHostAddress addr = QHostAddress(args[1]);
           sy = dm->GetConfig(addr);
         } else {
-          QHostAddress addr("10.22.2.101");
+          QHostAddress addr("192.168.0.16");
           sy = dm->GetConfig(addr);
         }
 

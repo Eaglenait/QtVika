@@ -12,6 +12,11 @@
 #include <QtNetwork>
 #include <QHostAddress>
 #include <QNetworkAccessManager>
+#include "QtWebSockets/qwebsocketserver.h"
+#include "QtWebSockets/qwebsocket.h"
+
+#include <qMDNS.h>
+
 /*
     Device discovery
     Config parsing
@@ -26,35 +31,36 @@ public:
     VikaDevice();
 };
 
-class DeviceManager: QObject
-{
+class DeviceManager: public QObject {
     Q_OBJECT
 public:
     EchoServer *httpServer;
     QNetworkAccessManager *manager;
     QList<VikaDevice> deviceList;
 
+    QWebSocket *socket;
+
     explicit DeviceManager(QObject *parent = Q_NULLPTR);
+    ~DeviceManager();
 
     /// Sends a multicast request for every device to register to this server
     ///
     void AdvertiseServer();
 
-    void DebugPrint() const;
-
     //get request to found modules on '/getConfig' url
     QVector<VikaSyntax> GetConfig(QHostAddress addr);
+    void HostFound(const QHostInfo& addr) const;
+    void FindService(const QString &service);
+
 
 private:
     //Check if devices are alive
     //removes from deviceList is it isn't - returns number of devices removed
-    //TODO run on timer
+    //TODO background run on timer
     int isAlive() const;
 
     QHostAddress multicastAddressv4;
-    QHostAddress multicastAddressv6;
-    QUdpSocket socketv4;
-    QUdpSocket socketv6;
+    QUdpSocket UDPsocket;
 };
 
 #endif // DEVICEMANAGER_H

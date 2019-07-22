@@ -265,55 +265,78 @@ SyntaxHelper::SyntaxHelper() {
 }
 
 bool SyntaxHelper::IsVerb(const QString& verb) const {
-    return HasWord(verb, SyntaxType::Verb);
+    if(IndexOfWord(verb, SyntaxType::Verb) != -1){
+        return true;
+    }
+    return false;
 }
 
 bool SyntaxHelper::IsObject(const QString& object) const {
-    return HasWord(object, SyntaxType::Object);
+    if(IndexOfWord(object, SyntaxType::Object) != -1){
+        return true;
+    }
+    return false;
+
 }
 
 bool SyntaxHelper::IsLocalisation(const QString& localisation) const {
-    return HasWord(localisation, SyntaxType::Localisation);
-}
-
-bool SyntaxHelper::isAdjective(const QString& word) const {
-    return HasWord(word, SyntaxType::Adjective);
-}
-
-bool SyntaxHelper::HasWord(const QString &word, SyntaxType type) const {
-    if(_excludedList.contains(word)) {
-        return false;
+    if(IndexOfWord(localisation, SyntaxType::Object) != -1){
+        return true;
     }
+    return false;
+}
 
+bool SyntaxHelper::isAdjective(const QString& adjective) const {
+    if(IndexOfWord(adjective, SyntaxType::Object) != -1){
+        return true;
+    }
+    return false;
+}
+
+int SyntaxHelper::IndexOfWord(const QString &word, SyntaxType type) const {
+    int index = -1;
     switch (type) {
-        case SyntaxType::Verb:
-        foreach(const VikaWord &verb, _verbList)
-            if(word.startsWith(verb.word))
-                return true;
-        break;
-
-        case SyntaxType::Object:
-        foreach(const VikaWord &object, _objectList)
-            if(word.startsWith(object.word))
-                return true;
-        break;
-
-        case SyntaxType::Localisation:
-        foreach(const VikaWord &localisation, _localisationList)
-            if(word.startsWith(localisation.word)){
-                return true;
+    case SyntaxType::Verb:
+        foreach(const auto &verb, _verbList) {
+            index++;
+            if(word.startsWith(verb.word)) {
+                qDebug() << "verb found";
+                return index;
             }
+        }
         break;
 
-        case SyntaxType::Adjective:
-        foreach(const VikaWord &adjective, _adjectiveList){
-            if(word.startsWith(adjective.word)){
-               return true;
+    case SyntaxType::Object:
+        foreach(const auto &object, _objectList) {
+            index++;
+            if(word.startsWith(object.word)) {
+                qDebug() << "object found";
+                return index;
+            }
+        }
+        break;
+
+    case SyntaxType::Localisation:
+        foreach(const auto &localisation, _localisationList) {
+            index++;
+            if(word.startsWith(localisation.word)) {
+                qDebug() << "localisation found";
+                return index;
+            }
+        }
+        break;
+
+    case SyntaxType::Adjective:
+        foreach(const auto &adjective, _adjectiveList) {
+            index++;
+            if(word.startsWith(adjective.word)) {
+                qDebug() << "adjective found";
+                return index;
             }
         }
         break;
     }
-    return false;
+    return -1;
 }
 
 VikaSyntax SyntaxHelper::GetSyntax(QStringList sentence){
@@ -322,29 +345,34 @@ VikaSyntax SyntaxHelper::GetSyntax(QStringList sentence){
     QVector<QString> Adjectives;
     QString Localisation;
 
-    int sentenceCount = sentence.count() - 1;
     for (int i = 0; i < sentence.count(); ++i) {
-        if(IsVerb(sentence[i])) {
-            Verbs.append(sentence[i]);
+        QString word = sentence.at(i);
+        if(IsVerb(word)) {
+            Verbs.append(word);
+            continue;
         }
 
-        if(IsObject(sentence[i])) {
-            Objects.append(sentence[i]);
+        if(IsObject(word)) {
+            Objects.append(word);
+            continue;
         }
 
-        if(isAdjective(sentence[i])) {
-            Adjectives.append(sentence[i]);
+        if(isAdjective(word)) {
+            Adjectives.append(word);
+            continue;
         }
 
         //Localisation
-        if(IsLocalisation(sentence[i])){
+        if(IsLocalisation(word)){
             //composite localisations (salle de bain)
-            if((i+2) <= sentenceCount) {
-                if(sentence[i+1] == "de"){
-                    Localisation = sentence [i] + " de " + sentence[i+2];
+            if((i+2) <= sentence.count() ) {
+                if(sentence.at(i+1) == "de"){
+                    Localisation = word + " de " + sentence.at(i+2);
+                    continue;
                 }
             } else {
-                Localisation = sentence[i];
+                Localisation = word;
+                continue;
             }
         }
     }

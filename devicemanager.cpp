@@ -1,116 +1,144 @@
 #include "devicemanager.h"
 
-VikaDevice::VikaDevice() {}
+//TODO handle mobile lock on mdns lib (manually stop and start on screen lock/unlock
+//call device action
+//UI device List
 
 DeviceManager::DeviceManager(QObject *parent)
     : QObject (parent)
     , manager(new QNetworkAccessManager(this))
-    , multicastAddressv4(QStringLiteral("224.0.0.251"))
+    , zeroconf(new QZeroConf())
 {
-    bool bindResult = UDPsocket.bind(QHostAddress(QHostAddress::Any), 0);
-    if(!bindResult)
-        qDebug() << "Multicast bind error";
-    else
-        qDebug() << "Multicast bind success";
+    //HTTP Handling
+    QObject::connect(manager
+                     , &QNetworkAccessManager::finished
+                     , this
+                     , &DeviceManager::HandleHttpReponse);
 
-    connect(qMDNS::getInstance()
-            , &qMDNS::hostFound
-            , this
-            , &DeviceManager::HostFound);
+    //MDNS Handling
+    zeroconf->startBrowser("_vika._tcp");
+    QObject::connect(zeroconf
+                     , &QZeroConf::serviceAdded
+                     , this
+                     , &DeviceManager::GetConfig);
+
+    QObject::connect(zeroconf
+                     , &QZeroConf::serviceRemoved
+                     , this
+                     , &DeviceManager::RemoveDevice);
 }
 
-DeviceManager::~DeviceManager() {
+DeviceManager::~DeviceManager(){
+    delete manager;
+    zeroconf->stopBrowser();
+    delete zeroconf;
 }
 
-void DeviceManager::FindService(const QString& service) {
-    qDebug() << "finding service :" << service;
-    qMDNS::getInstance()->lookup(service);
-}
-
-void DeviceManager::HostFound(const QHostInfo& info) const {
-    qDebug() << "mdns host found on addr: " << info.addresses().first();
-}
-
-QVector<VikaSyntax> DeviceManager::GetConfig(QHostAddress addr) {
-    //TODO: get request to addr
-    QNetworkRequest req;
-    QString url = "http://" + addr.toString() + "/getConfig";
-    req.setUrl(QUrl(url));
-    req.setRawHeader("User-Agent", "Vika Volatile Server");
-    req.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-
-    QVector<VikaSyntax> syntaxes;
-
-    manager->get(req);
-
-    //fix requests
-
-    QByteArray replyMessage;
-    QObject::connect(manager, &QNetworkAccessManager::finished, this,
-                     [=, &replyMessage](QNetworkReply *reply) {
-      if(reply->error()) {
-        qDebug() << reply->errorString();
-        return syntaxes;
-      }
-
-      replyMessage = reply->readAll();
-      qDebug() << "answer : " << replyMessage;
-    });
-
-    qDebug() << "getConfig response : " << replyMessage;
+void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
+    qDebug() << "DeviceManager - Handling GetConfig";
+    if(reply->error()){
+        qDebug() << "  - HTTP reponse handling error: "
+                 << reply->errorString();
+        return;
+    }
 
     QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(replyMessage, &parseError);
+    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll()
+                                                , &parseError);
 
     if(parseError.error != QJsonParseError::NoError) {
-      qDebug() << "reply is not json";
-      return syntaxes;
+      qDebug() << "  - Error while parsing Http response";
+      return;
     }
 
-    if (!doc["a"].isArray()) qDebug() << "response is not array";
-    else qDebug() << "response is array";
+    if (!doc["a"].isArray())
+        qDebug() << "- Device actions are not an array";
+    else
+        qDebug() << "  - Device actions are an array";
 
+
+    //parse host addr from url
+    QHostAddress replyHost = QHostAddress(QUrl(reply->url()).host());
+
+    QVector<Action> actions;
+
+    //Parse actions from json repsonse and build a device
     auto jsonActions = doc["a"].toArray();
-
     foreach(const QJsonValue & action, jsonActions){
-      VikaSyntax syntax;
+        qDebug() << "  -Action found";
 
-      foreach(const QJsonValue & verb, action["vrb"].toArray()){
-        syntax.Verbs.append(verb.toString());
-      }
+        VikaSyntax syntax;
 
-      foreach(const QJsonValue & obj, action["obj"].toArray()){
-        syntax.Objects.append(obj.toString());
-      }
+        foreach(const QJsonValue & verb, action["vrb"].toArray()){
+            syntax.Verbs.append(verb.toString());
+        }
 
-      foreach(const QJsonValue & adj, action["adj"].toArray()){
-        syntax.Adjectives.append(adj.toString());
-      }
+        foreach(const QJsonValue & obj, action["obj"].toArray()){
+            syntax.Objects.append(obj.toString());
+        }
 
-      syntax.Localisation = doc["loc"].toString();
-      syntax.description 	= doc["desc"].toString();
+        foreach(const QJsonValue & adj, action["adj"].toArray()){
+            syntax.Adjectives.append(adj.toString());
+        }
 
-      syntaxes.append(syntax);
+        syntax.Localisation = doc["loc"].toString();
+
+        ActionType actionType;
+        QString actionTypeStr = doc["type"].toString();
+
+        if(actionTypeStr == "Toggle") {
+            actionType = ActionType::Toggle;
+        } else if(actionTypeStr == "Analog") {
+            actionType = ActionType::Analog;
+        } else if(actionTypeStr == "Measure") {
+            actionType = ActionType::Measure;
+        } else {
+            qDebug() << "DeviceManager - Undefined Action type, str: " << doc["type"].toString();
+            actionType = ActionType::Undefined;
+        }
+
+        QString description	= doc["desc"].toString();
+        QString uri = "http://" + replyHost.toString() + "/handlePin?a=" + actions.length();
+        qDebug() << uri;
+
+        actions.push_back(Action(actionType, syntax, uri, description));
+        qDebug() << actions.last().description;
+        actions.last().syntax.Print();
     }
 
-    //Default: return empty syntax
-    return syntaxes;
+    //Add device to device pool
+    deviceList.push_back(Device(replyHost, actions));
+    emit DeviceAdded();
 }
 
-void DeviceManager::AdvertiseServer() {
-  qDebug() << "Advertising server";
-  QByteArray datagram = "Vika Server Advertisement";
+void DeviceManager::GetConfig(QZeroConfService service) {
+    if(DeviceAddrIndexOf(service->ip()) != -1) {
+        qDebug() << "DeviceManager - GetConfig abort : device already exists";
+        return;
+    }
 
-  UDPsocket.writeDatagram(datagram, multicastAddressv4, 45454);
+    QString url = "http://" + service->ip().toString() + "/getConfig";
 
+    qDebug() << "DeviceManager - Getting config on url " << url;
+
+    QNetworkRequest req;
+    req.setUrl(QUrl(url));
+    req.setRawHeader("User-Agent", "Vika Volatile Server");
+
+    manager->get(req);
 }
 
-int DeviceManager::isAlive() const {
 
-    //foreach(auto & device, deviceList) {
-        //TODO : ping device, remove from devicelist if no response
-    //}
+void DeviceManager::RemoveDevice(QZeroConfService service) {
+    qDebug() << "DeviceManager - Remove Device";
+}
 
-    //TODO: Return number of devices removed ? (or device currently alive)
-    return 0;
+int DeviceManager::DeviceAddrIndexOf(const QHostAddress &addr) const {
+    for (int i = 0; i < deviceList.length(); ++i) {
+        if(deviceList[i].address == addr) {
+            return i;
+        }
+    }
+
+    return -1;
 }

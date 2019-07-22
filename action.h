@@ -3,50 +3,31 @@
 
 #include <QJsonObject>
 #include <QVector>
+#include <QNetworkAccessManager>
+#include "syntaxhelper.h"
 
 enum ActionType {
-    Toggle,
-    Analog,
-    Measure
-};
-
-struct Syntax{
-public:
-    //TODO REMOVE
-    Syntax(){
-
-    }
-    Syntax(const Syntax &syntax) {
-        this->_verbs = syntax._verbs;
-        this->_objects = syntax._objects;
-        this->_localisations = syntax._localisations;
-    }
-
-private:
-    QVector<QString> _verbs;
-    QVector<QString> _objects;
-    QVector<QString> _localisations;
+    Toggle
+    ,Analog
+    ,Measure
+    ,Undefined
 };
 
 class Action
 {
 public:
-    Action(ActionType Type, const Syntax &Syntax, const QString &Uri);
+    Action();
+    Action(ActionType Type, VikaSyntax Syntax, QString Uri, QString Description);
 
+    bool operator==(const Action &) const;
 
-    /// \brief Calls the action
-    /// \param optional value
-    /// \return json with response code or with value depending on call type
-    QJsonObject Call(int value = -1);
+    ActionType type;
+    QString description;
+    VikaSyntax syntax;
 
-private:
-    ActionType _type;
-    Syntax _syntax;
+    QNetworkRequest req;
 
-
-    QString _uri;
-
+    void Call(QNetworkAccessManager &mngr, int arg = -1) const;
 
 };
-
 #endif // ACTION_H

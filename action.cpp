@@ -1,25 +1,25 @@
 #include "action.h"
 
-Action::Action(ActionType Type, const Syntax &Syntax, const QString &Uri) {
-    _type = Type;
-    _uri = Uri;
+Action::Action(){}
 
-    _syntax = Syntax;
+Action::Action(ActionType Type, VikaSyntax Syntax, QString Uri, QString Description) :
+    type(Type)
+  , description(Description)
+  , syntax(Syntax)
+{
+    req.setUrl(Uri);
+}
+bool Action::operator==(const Action &action) const{
+    if(VikaSyntax::Compare(action.syntax, this->syntax) == 100) {
+        return true;
+    }
+    return false;
 }
 
-QJsonObject Action::Call(int value) {
-    if(value != -1){
+void Action::Call(QNetworkAccessManager &mngr, int arg) const {
+    //TODO handle analog call and measure
+    //arg has to be called "arg"
+    qDebug() << "Action - calling";
 
-        //call uri without value
-
-    }else{
-
-        //call uri with value
-
-    }
-
-    //handle response JSON
-
-    QJsonObject j;
-    return j;
+    mngr.get(req);
 }

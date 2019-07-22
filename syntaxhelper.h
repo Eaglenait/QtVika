@@ -44,14 +44,13 @@ public:
     bool IsLocalisation(const QString& word) const;
     bool isAdjective(const QString& word) const;
 
-private:
-    const QVector<QString> _excludedList = {"le", "la", "les"};
+    int IndexOfWord(const QString &word, SyntaxType type) const;
 
+private:
+    //Stores words from JSON words lists
     QVector<VikaWord> _verbList;
     QVector<VikaWord> _objectList;
     QVector<VikaWord> _localisationList;
     QVector<VikaWord> _adjectiveList;
-
-    bool HasWord(const QString &word, SyntaxType type) const;
 };
 #endif // SYNTAXHELPER_H

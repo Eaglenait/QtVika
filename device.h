@@ -7,17 +7,14 @@
 
 class Device {
 public:
-    Device(const QHostAddress &Address,
-           const QVector<Action> &actions);
+    Device(QHostAddress Address, QVector<Action> actions);
 
-    //REST call to the device to get its config
-    static Device GetConfig(const QHostAddress &Address);
+    QHostAddress address;
+    QVector<Action> actions;
+    int IndexOfAction(const Action &action);
 
-    bool HasAction(const Action &action) const;
+    void Print() const;
 
-private:
-    QHostAddress _address;
-    QVector<Action> _actions;
 };
 
 #endif // DEVICE_H

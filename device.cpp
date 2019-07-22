@@ -1,11 +1,23 @@
 #include "device.h"
-Device::Device(const QHostAddress &Address,
-               const QVector<Action> &Actions):
-    _address(Address), _actions(Actions) {}
+Device::Device(QHostAddress Address,QVector<Action> Actions):
+    address(Address)
+  , actions(Actions)
+{
+}
 
-static Device GetConfig(const QHostAddress &Address) {
-    //Rest call to ipAddress
-    //Returns a json
-    //parse JSON and init new device
+int Device::IndexOfAction(const Action &action) {
+    for (int i = 0; i < actions.length(); ++i) {
+        if(action == actions[i]){
+           return i;
+        }
+    }
+    return -1;
+}
 
+void Device::Print() const {
+    qDebug()<< "Device: " << this->address;
+    foreach(const auto &action, actions){
+        qDebug() << "ActionType: " << action.type << " description " << action.description;
+        action.syntax.Print();
+    }
 }

@@ -2,7 +2,10 @@
 #define DEVICEMANAGER_H
 
 #include "syntaxhelper.h"
-#include "echoserver.h"
+
+#include <QTimer>
+#include "qzeroconf.h"
+#include "qzeroconfservice.h"
 
 #include <QJsonDocument>
 #include <QJsonParseError>
@@ -12,55 +15,32 @@
 #include <QtNetwork>
 #include <QHostAddress>
 #include <QNetworkAccessManager>
-#include "QtWebSockets/qwebsocketserver.h"
-#include "QtWebSockets/qwebsocket.h"
 
-#include <qMDNS.h>
-
-/*
-    Device discovery
-    Config parsing
-    Device CRUD
-*/
-
-class VikaDevice {
-public:
-    QHostAddress DeviceAddress;
-    QList<VikaSyntax> configs;
-
-    VikaDevice();
-};
+#include "device.h"
 
 class DeviceManager: public QObject {
     Q_OBJECT
 public:
-    EchoServer *httpServer;
     QNetworkAccessManager *manager;
-    QList<VikaDevice> deviceList;
-
-    QWebSocket *socket;
+    QList<Device> deviceList;
 
     explicit DeviceManager(QObject *parent = Q_NULLPTR);
     ~DeviceManager();
 
-    /// Sends a multicast request for every device to register to this server
-    ///
-    void AdvertiseServer();
+public slots:
+    void HandleHttpReponse(QNetworkReply *);
+    void GetConfig(QZeroConfService);
+    void RemoveDevice(QZeroConfService);
 
-    //get request to found modules on '/getConfig' url
-    QVector<VikaSyntax> GetConfig(QHostAddress addr);
-    void HostFound(const QHostInfo& addr) const;
-    void FindService(const QString &service);
-
+signals:
+    void DeviceAdded() const;
+    void DeviceRemoved(const int index) const ;
 
 private:
-    //Check if devices are alive
-    //removes from deviceList is it isn't - returns number of devices removed
-    //TODO background run on timer
-    int isAlive() const;
+    QZeroConf *zeroconf;
+    QTimer *t;
 
-    QHostAddress multicastAddressv4;
-    QUdpSocket UDPsocket;
+    int DeviceAddrIndexOf(const QHostAddress &) const;
 };
 
 #endif // DEVICEMANAGER_H

@@ -14,5 +14,6 @@
         <file>syntaxhelper.cpp</file>
         <file>syntaxhelper.h</file>
         <file>vikaword.h</file>
+        <file>mainWindow.qml</file>
     </qresource>
 </RCC>

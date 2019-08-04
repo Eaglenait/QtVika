@@ -10,36 +10,46 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->MainLayout->setOriginCorner(Qt::Corner::TopLeftCorner);
+
     //On new device add to UI list
     QObject::connect(deviceManager, &DeviceManager::DeviceAdded, this, &MainWindow::AddDevice);
     QObject::connect(deviceManager, &DeviceManager::DeviceRemoved, this, &MainWindow::RemoveDevice);
     QObject::connect(mngr, &QNetworkAccessManager::finished, this, &MainWindow::HandleResponse);
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete ui;
     delete deviceManager;
 }
 
 void MainWindow::AddDevice() const {
     qDebug() << "add device";
-    ui->lst_devices->addItem(deviceManager->deviceList.last().address.toString());
+
+    foreach(const auto &action, deviceManager->deviceList.last().actions){
+        ui->lst_devices->addItem(action.description);
+    }
 }
 
 void MainWindow::RemoveDevice(const int index) const {
-    ui->lst_devices->takeItem(index);
+    qDebug() << "remove device from ui at index " << index;
+    RedrawList();
 }
 
-void MainWindow::on_lst_devices_clicked(const QModelIndex &index) const
-{
+void MainWindow::on_lst_devices_clicked(const QModelIndex &index) const {
     qDebug() << "row " << index.row() << " selected";
-    QNetworkRequest req = deviceManager->deviceList.at(index.row()).actions.first().req;
+    qDebug() << "max index : " << deviceManager->deviceList.length();
+    //if(index.row() > 0 && index.row() <= deviceManager->deviceList.length()) {
+        QNetworkRequest req = deviceManager->deviceList.at(index.row()).actions.first().req;
 
-    mngr->get(req);
+        mngr->get(req);
+    //}
+    //else {
+    //    qDebug() << "clicked index out of range max index : " << deviceManager->deviceList.length();
+    //}
 }
 
-void MainWindow::HandleResponse(QNetworkReply *reply){
+void MainWindow::HandleResponse(QNetworkReply *reply) {
     if(reply->error()) {
        qDebug() << reply->errorString();
     }
@@ -47,24 +57,14 @@ void MainWindow::HandleResponse(QNetworkReply *reply){
     qDebug() << "handling call response" << reply->readAll();
 }
 
-void MainWindow::on_btn_syntax_clicked()
-{
-    qDebug() << "MainWindow - Getting syntax";
+void MainWindow::RedrawList() const{
+    //TODO
+    qDebug() << "redrawing device list";
 
-    VikaSyntax s = syntaxHelper->GetSyntax(syntax.split(' '));
-    foreach(const auto &device, deviceManager->deviceList) {
-        foreach(const auto &action, device.actions) {
-            short compareScore = VikaSyntax::Compare(s, action.syntax);
-            qDebug() << "Compare score: " << compareScore;
-            if(compareScore >= 70) {
-                mngr->get(action.req);
-                return;
-            }
+    ui->lst_devices->clear();
+    foreach(const auto &device, deviceManager->deviceList){
+        foreach(const auto &action, device.actions){
+            ui->lst_devices->addItem(action.description);
         }
     }
-}
-
-void MainWindow::on_syntax_textEdited(const QString &arg1)
-{
-    syntax = arg1;
 }

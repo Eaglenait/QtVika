@@ -9,7 +9,7 @@ DeviceManager::DeviceManager(QObject *parent)
     , manager(new QNetworkAccessManager(this))
     , zeroconf(new QZeroConf())
 {
-    //HTTP Handling
+    //HTTP (getConfig) Handling
     QObject::connect(manager
                      , &QNetworkAccessManager::finished
                      , this
@@ -26,12 +26,47 @@ DeviceManager::DeviceManager(QObject *parent)
                      , &QZeroConf::serviceRemoved
                      , this
                      , &DeviceManager::RemoveDevice);
+
+    //isAlive timer
+    t = new QTimer(this);
+    QObject::connect(t, &QTimer::timeout, this, &DeviceManager::isAlive);
+    t->start(1000);
 }
 
 DeviceManager::~DeviceManager(){
     delete manager;
     zeroconf->stopBrowser();
     delete zeroconf;
+}
+
+void DeviceManager::isAlive(){
+    qDebug() << "isAlive";
+    QVector<int> toRemove;
+    QNetworkAccessManager *isAliveManager = new QNetworkAccessManager(this);
+
+    for(int i = 0; i < deviceList.length(); i++) {
+
+        QNetworkRequest req;
+
+        QString url = "http://" + deviceList[i].address.toString() + "/";
+        req.setUrl(QUrl(url));
+        req.setRawHeader("User-Agent", "Vika Volatile Server");
+
+        qDebug() << "isAlive - on url : " << url;
+        QNetworkReply *reply = isAliveManager->get(req);
+        if(reply->error()){
+            qDebug() << "isAlive error";
+            toRemove.push_back(i);
+        }
+    }
+
+    if(toRemove.length() != 0) {
+        foreach(const int idx, toRemove) {
+            toRemove.removeAt(idx);
+            qDebug() << "isAlive removed at idx " << idx;
+        }
+    }
+
 }
 
 void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
@@ -81,10 +116,10 @@ void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
             syntax.Adjectives.append(adj.toString());
         }
 
-        syntax.Localisation = doc["loc"].toString();
+        syntax.Localisation = action["loc"].toString();
 
         ActionType actionType;
-        QString actionTypeStr = doc["type"].toString();
+        QString actionTypeStr = action["type"].toString();
 
         if(actionTypeStr == "Toggle") {
             actionType = ActionType::Toggle;
@@ -93,11 +128,14 @@ void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
         } else if(actionTypeStr == "Measure") {
             actionType = ActionType::Measure;
         } else {
-            qDebug() << "DeviceManager - Undefined Action type, str: " << doc["type"].toString();
+            qDebug() << "DeviceManager - Undefined Action type, str: "
+                     << action["type"].toString();
             actionType = ActionType::Undefined;
         }
 
-        QString description	= doc["desc"].toString();
+        QString description	= action["desc"].toString();
+        qDebug() << "description parsed: " << description;
+
         QString uri = "http://" + replyHost.toString() + "/handlePin?a=" + actions.length();
         qDebug() << uri;
 
@@ -128,7 +166,6 @@ void DeviceManager::GetConfig(QZeroConfService service) {
     manager->get(req);
 }
 
-
 void DeviceManager::RemoveDevice(QZeroConfService service) {
     qDebug() << "DeviceManager - Remove Device";
 }
@@ -139,6 +176,5 @@ int DeviceManager::DeviceAddrIndexOf(const QHostAddress &addr) const {
             return i;
         }
     }
-
     return -1;
 }

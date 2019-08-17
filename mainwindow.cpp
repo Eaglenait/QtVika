@@ -33,10 +33,20 @@ void MainWindow::RemoveDevice(const int index) const {
 
 void MainWindow::on_lst_devices_clicked(const QModelIndex &index) const
 {
-    qDebug() << "row " << index.row() << " selected";
     QNetworkRequest req = deviceManager->deviceList.at(index.row()).actions.first().req;
 
-    mngr->get(req);
+    //FIX pour avoir la bonne action
+    // probablement avec le nouvel UI
+
+    QHttpMultiPart *http = new QHttpMultiPart();
+    QHttpPart part;
+    QByteArray qb = "coucou";
+
+    part.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"data\""));
+    part.setBody(qb);
+
+    http->append(part);
+    mngr->post(req, http);
 }
 
 void MainWindow::HandleResponse(QNetworkReply *reply){
@@ -45,26 +55,4 @@ void MainWindow::HandleResponse(QNetworkReply *reply){
     }
 
     qDebug() << "handling call response" << reply->readAll();
-}
-
-void MainWindow::on_btn_syntax_clicked()
-{
-    qDebug() << "MainWindow - Getting syntax";
-
-    VikaSyntax s = syntaxHelper->GetSyntax(syntax.split(' '));
-    foreach(const auto &device, deviceManager->deviceList) {
-        foreach(const auto &action, device.actions) {
-            short compareScore = VikaSyntax::Compare(s, action.syntax);
-            qDebug() << "Compare score: " << compareScore;
-            if(compareScore >= 70) {
-                mngr->get(action.req);
-                return;
-            }
-        }
-    }
-}
-
-void MainWindow::on_syntax_textEdited(const QString &arg1)
-{
-    syntax = arg1;
 }

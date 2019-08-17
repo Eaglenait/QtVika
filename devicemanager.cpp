@@ -34,6 +34,36 @@ DeviceManager::~DeviceManager(){
     delete zeroconf;
 }
 
+void DeviceManager::isAlive(){
+//    qDebug() << "isAlive";
+//    QVector<int> toRemove;
+//    QNetworkAccessManager *isAliveManager = new QNetworkAccessManager(this);
+//
+//    for(int i = 0; i < deviceList.length(); i++) {
+//
+//        QNetworkRequest req;
+//
+//        QString url = "http://" + deviceList[i].address.toString() + "/";
+//        req.setUrl(QUrl(url));
+//        req.setRawHeader("User-Agent", "Vika Volatile Server");
+//
+//        qDebug() << "isAlive - on url : " << url;
+//        QNetworkReply *reply = isAliveManager->get(req);
+//        if(reply->error()){
+//            qDebug() << "isAlive error";
+//            toRemove.push_back(i);
+//        }
+//    }
+//
+//    if(toRemove.length() != 0) {
+//        foreach(const int idx, toRemove) {
+//            toRemove.removeAt(idx);
+//            qDebug() << "isAlive removed at idx " << idx;
+//        }
+//    }
+//
+}
+
 void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
     qDebug() << "DeviceManager - Handling GetConfig";
     if(reply->error()){

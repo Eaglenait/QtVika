@@ -6,12 +6,10 @@
 #include <QNetworkAccessManager>
 #include "syntaxhelper.h"
 
-enum ActionType {
-    Toggle
-    ,Analog
-    ,Measure
-    ,Undefined
-};
+#include "QHttpMultiPart"
+#include "QHttpPart"
+
+enum ActionType { Toggle, Analog, Measure, Undefined };
 
 class Action
 {
@@ -26,8 +24,5 @@ public:
     VikaSyntax syntax;
 
     QNetworkRequest req;
-
-    void Call(QNetworkAccessManager &mngr, int arg = -1) const;
-
 };
 #endif // ACTION_H

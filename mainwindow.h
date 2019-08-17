@@ -9,6 +9,7 @@
 
 #include "device.h"
 #include "syntaxhelper.h"
+#include "QHttpMultiPart"
 
 #include <QListWidgetItem>
 

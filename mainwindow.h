@@ -32,10 +32,6 @@ private slots:
 
     void on_lst_devices_clicked(const QModelIndex &index) const;
 
-    void on_btn_syntax_clicked();
-
-    void on_syntax_textEdited(const QString &arg1);
-
 private:
     Ui::MainWindow *ui;
     DeviceManager *deviceManager;

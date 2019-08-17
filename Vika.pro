@@ -16,7 +16,6 @@ SOURCES += \
         action.cpp \
         device.cpp \
         devicemanager.cpp \
-        echoserver.cpp \
         main.cpp \
         mainwindow.cpp \
         syntaxhelper.cpp
@@ -25,7 +24,6 @@ HEADERS += \
     action.h \
     device.h \
     devicemanager.h \
-    echoserver.h \
     mainwindow.h \
     syntaxhelper.h \
     vikaword.h \

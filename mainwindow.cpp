@@ -31,8 +31,7 @@ void MainWindow::RemoveDevice(const int index) const {
     ui->lst_devices->takeItem(index);
 }
 
-void MainWindow::on_lst_devices_clicked(const QModelIndex &index) const
-{
+void MainWindow::on_lst_devices_clicked(const QModelIndex &index) const {
     QNetworkRequest req = deviceManager->deviceList.at(index.row()).actions.first().req;
 
     //FIX pour avoir la bonne action
@@ -49,7 +48,7 @@ void MainWindow::on_lst_devices_clicked(const QModelIndex &index) const
     mngr->post(req, http);
 }
 
-void MainWindow::HandleResponse(QNetworkReply *reply){
+void MainWindow::HandleResponse(QNetworkReply *reply) {
     if(reply->error()) {
        qDebug() << reply->errorString();
     }

@@ -11,8 +11,7 @@
 
 enum ActionType { Toggle, Analog, Measure, Undefined };
 
-class Action
-{
+class Action {
 public:
     Action();
     Action(ActionType Type, VikaSyntax Syntax, QString Uri, QString Description);

@@ -31,7 +31,6 @@ public slots:
     void HandleHttpReponse(QNetworkReply *);
     void GetConfig(QZeroConfService);
     void RemoveDevice(QZeroConfService);
-    void isAlive();
 
 signals:
     void DeviceAdded() const;

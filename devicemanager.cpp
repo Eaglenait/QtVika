@@ -13,7 +13,7 @@ DeviceManager::DeviceManager(QObject *parent)
     QObject::connect(manager
                      , &QNetworkAccessManager::finished
                      , this
-                     , &DeviceManager::HandleHttpReponse);
+                     , &DeviceManager::HandleGetConfigResponse);
 
     //MDNS Handling
     zeroconf->startBrowser("_vika._tcp");
@@ -21,11 +21,6 @@ DeviceManager::DeviceManager(QObject *parent)
                      , &QZeroConf::serviceAdded
                      , this
                      , &DeviceManager::GetConfig);
-
-    QObject::connect(zeroconf
-                     , &QZeroConf::serviceRemoved
-                     , this
-                     , &DeviceManager::RemoveDevice);
 }
 
 DeviceManager::~DeviceManager(){
@@ -34,7 +29,8 @@ DeviceManager::~DeviceManager(){
     delete zeroconf;
 }
 
-void DeviceManager::isAlive(){
+//Fix pls
+void DeviceManager::isAlive() {
 //    qDebug() << "isAlive";
 //    QVector<int> toRemove;
 //    QNetworkAccessManager *isAliveManager = new QNetworkAccessManager(this);
@@ -64,7 +60,22 @@ void DeviceManager::isAlive(){
 //
 }
 
-void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
+void DeviceManager::CallAction(const Action &a) const {
+    QHttpMultiPart *http = new QHttpMultiPart();
+    QHttpPart part;
+    QByteArray qb = "coucou";
+
+    part.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"data\""));
+    part.setBody(qb);
+
+    http->append(part);
+    manager->post(a.req, http);
+
+    //may be useless
+    delete http;
+}
+
+void DeviceManager::HandleGetConfigResponse(QNetworkReply *reply) {
     qDebug() << "DeviceManager - Handling GetConfig";
     if(reply->error()){
         qDebug() << "  - HTTP reponse handling error: "
@@ -136,9 +147,10 @@ void DeviceManager::HandleHttpReponse(QNetworkReply *reply) {
         actions.last().syntax.Print();
     }
 
-    //Add device to device pool
+    //Add device to device list
     deviceList.push_back(Device(replyHost, actions));
-    emit DeviceAdded();
+
+    emit DeviceDiscovered();
 }
 
 void DeviceManager::GetConfig(QZeroConfService service) {
@@ -156,11 +168,6 @@ void DeviceManager::GetConfig(QZeroConfService service) {
     req.setRawHeader("User-Agent", "Vika Volatile Server");
 
     manager->get(req);
-}
-
-
-void DeviceManager::RemoveDevice(QZeroConfService service) {
-    qDebug() << "DeviceManager - Remove Device";
 }
 
 int DeviceManager::DeviceAddrIndexOf(const QHostAddress &addr) const {

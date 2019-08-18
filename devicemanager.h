@@ -28,19 +28,32 @@ public:
     ~DeviceManager();
 
 public slots:
-    void HandleHttpReponse(QNetworkReply *);
+    /// \brief Parses the response and adds the device to the devicelist
+    /// - emits : DeviceManager::DeviceAdded
+    void HandleGetConfigResponse(QNetworkReply *);
+
+    /// \brief Gets device config on zeroconf discover
     void GetConfig(QZeroConfService);
-    void RemoveDevice(QZeroConfService);
+
+    /// \brief Goes through the list of devices and removes those who doesn't respond
+    /// - emits : DeviceMissing
     void isAlive();
 
+    /// \brief Calling an action
+    void CallAction(const Action &a) const;
+
 signals:
-    void DeviceAdded() const;
-    void DeviceRemoved(const int index) const ;
+    void DeviceDiscovered() const;
+
+    /// \brief Emitted on failure to respond to IsAlive request
+    /// \param Addresses of non-responding devices
+    void DeviceMissing(QList<QHostAddress>) const;
 
 private:
     QZeroConf *zeroconf;
     QTimer *t;
 
+    /// \brief Returns the index of the device with the given IP address
     int DeviceAddrIndexOf(const QHostAddress &) const;
 };
 

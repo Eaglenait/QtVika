@@ -1,1 +1,1 @@
-Qt Version of the Vika server
+Vika Client

@@ -40,10 +40,10 @@ public slots:
     void isAlive();
 
     /// \brief Calling an action
-    void CallAction(const Action &a) const;
+    void CallAction(const QModelIndex &) const;
 
 signals:
-    void DeviceDiscovered() const;
+    void DeviceDiscovered(const Device &) const;
 
     /// \brief Emitted on failure to respond to IsAlive request
     /// \param Addresses of non-responding devices

@@ -1,22 +1,22 @@
 #include "mainwindow.h"
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent)
 {
     auto *layoutMain = new QVBoxLayout(this);
-    auto *deviceList = new DeviceList(this);
+    auto *actionList = new ActionList(this);
 
-    deviceList->AddDevice("description 1"
-                          , "keyword a"
-                          , "state");
-    deviceList->AddDevice("description 2"
-                          , "keyword b"
-                          , "state");
-    deviceList->AddDevice("description 3"
-                          , "keyword c"
-                          , "state");
+    deviceManager = new DeviceManager(this);
 
-    layoutMain->addWidget(deviceList);
+    //Add devices actions to UI
+    QObject::connect(deviceManager, &DeviceManager::DeviceDiscovered,
+                     actionList, &ActionList::AddActions);
+
+    QObject::connect(actionList, &ActionList::clicked,
+                     deviceManager, &DeviceManager::CallAction);
+
+    layoutMain->addWidget(actionList);
 
     resize(800,600);
 }

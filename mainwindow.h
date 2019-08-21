@@ -1,13 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "devicelist.h"
+#include "actionlist.h"
+#include <QObject>
 
 #include <QBoxLayout>
 #include <QGroupBox>
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+
+#include "devicemanager.h"
 
 class MainWindow : public QWidget
 {
@@ -16,6 +19,8 @@ class MainWindow : public QWidget
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
+private:
+    DeviceManager *deviceManager;
 };
 
 #endif // MAINWINDOW_H

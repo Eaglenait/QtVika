@@ -10,17 +10,13 @@ DeviceManager::DeviceManager(QObject *parent)
     , zeroconf(new QZeroConf())
 {
     //HTTP Handling
-    QObject::connect(manager
-                     , &QNetworkAccessManager::finished
-                     , this
-                     , &DeviceManager::HandleGetConfigResponse);
+    QObject::connect(manager, &QNetworkAccessManager::finished,
+                     this, &DeviceManager::HandleGetConfigResponse);
 
     //MDNS Handling
     zeroconf->startBrowser("_vika._tcp");
-    QObject::connect(zeroconf
-                     , &QZeroConf::serviceAdded
-                     , this
-                     , &DeviceManager::GetConfig);
+    QObject::connect(zeroconf, &QZeroConf::serviceAdded,
+                     this, &DeviceManager::GetConfig);
 }
 
 DeviceManager::~DeviceManager(){
@@ -57,10 +53,13 @@ void DeviceManager::isAlive() {
 //            qDebug() << "isAlive removed at idx " << idx;
 //        }
 //    }
-//
 }
 
-void DeviceManager::CallAction(const Action &a) const {
+void DeviceManager::CallAction(const QModelIndex &index) const {
+    QNetworkRequest req;
+    QString url = index.data(Qt::UserRole + 2).toString();
+    req.setUrl(QUrl(url));
+
     QHttpMultiPart *http = new QHttpMultiPart();
     QHttpPart part;
     QByteArray qb = "coucou";
@@ -69,7 +68,7 @@ void DeviceManager::CallAction(const Action &a) const {
     part.setBody(qb);
 
     http->append(part);
-    manager->post(a.req, http);
+    manager->post(req, http);
 
     //may be useless
     delete http;
@@ -83,8 +82,10 @@ void DeviceManager::HandleGetConfigResponse(QNetworkReply *reply) {
         return;
     }
 
+    QByteArray data = reply->readAll();
+
     QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll()
+    QJsonDocument doc = QJsonDocument::fromJson(data
                                                 , &parseError);
 
     if(parseError.error != QJsonParseError::NoError) {
@@ -92,40 +93,36 @@ void DeviceManager::HandleGetConfigResponse(QNetworkReply *reply) {
       return;
     }
 
-    if (!doc["a"].isArray())
-        qDebug() << "- Device actions are not an array";
-    else
-        qDebug() << "  - Device actions are an array";
-
-
     //parse host addr from url
     QHostAddress replyHost = QHostAddress(QUrl(reply->url()).host());
 
     QVector<Action> actions;
 
     //Parse actions from json repsonse and build a device
-    auto jsonActions = doc["a"].toArray();
-    foreach(const QJsonValue & action, jsonActions){
-        qDebug() << "  -Action found";
-
+    QJsonArray jsonActions = doc["a"].toArray();
+    for (int i = 0; i < jsonActions.size(); i++) {
+        QJsonObject ac = jsonActions[i].toObject();
         VikaSyntax syntax;
 
-        foreach(const QJsonValue & verb, action["vrb"].toArray()){
+        foreach(const QJsonValue & verb, ac["vrb"].toArray()){
             syntax.Verbs.append(verb.toString());
         }
 
-        foreach(const QJsonValue & obj, action["obj"].toArray()){
+        foreach(const QJsonValue & obj, ac["obj"].toArray()){
             syntax.Objects.append(obj.toString());
         }
 
-        foreach(const QJsonValue & adj, action["adj"].toArray()){
+        foreach(const QJsonValue & adj, ac["adj"].toArray()){
             syntax.Adjectives.append(adj.toString());
         }
 
-        syntax.Localisation = doc["loc"].toString();
+        syntax.Localisation = ac["loc"].toString();
+
+        QString description	= ac["desc"].toString();
+        QString uri = "http://" + replyHost.toString() + "/handlePin?a=" + i;
 
         ActionType actionType;
-        QString actionTypeStr = doc["type"].toString();
+        QString actionTypeStr = ac["type"].toString();
 
         if(actionTypeStr == "Toggle") {
             actionType = ActionType::Toggle;
@@ -134,23 +131,18 @@ void DeviceManager::HandleGetConfigResponse(QNetworkReply *reply) {
         } else if(actionTypeStr == "Measure") {
             actionType = ActionType::Measure;
         } else {
-            qDebug() << "DeviceManager - Undefined Action type, str: " << doc["type"].toString();
+            qDebug() << "DeviceManager - Undefined Action type, str: " << ac["type"].toString();
             actionType = ActionType::Undefined;
         }
 
-        QString description	= doc["desc"].toString();
-        QString uri = "http://" + replyHost.toString() + "/handlePin?a=" + actions.length();
-        qDebug() << uri;
-
         actions.push_back(Action(actionType, syntax, uri, description));
-        qDebug() << actions.last().description;
-        actions.last().syntax.Print();
     }
 
+    Device d = Device(replyHost, actions);
     //Add device to device list
-    deviceList.push_back(Device(replyHost, actions));
+    deviceList.push_back(d);
 
-    emit DeviceDiscovered();
+    emit DeviceDiscovered(d);
 }
 
 void DeviceManager::GetConfig(QZeroConfService service) {

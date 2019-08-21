@@ -14,6 +14,8 @@ include(libs/QtZeroConf/qtzeroconf.pri)
 
 SOURCES += \
         action.cpp \
+        actiondelegate.cpp \
+        actionlist.cpp \
         device.cpp \
         devicemanager.cpp \
         main.cpp \
@@ -22,6 +24,9 @@ SOURCES += \
 
 HEADERS += \
     action.h \
+    actiondelegate.h \
+    actiondelegate_p.h \
+    actionlist.h \
     device.h \
     devicemanager.h \
     mainwindow.h \
@@ -35,3 +40,4 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+

@@ -1,11 +1,11 @@
-#ifndef DEVICEDELEGATE_P_H
-#define DEVICEDELEGATE_P_H
+#ifndef ACTIONDELEGATE_P_H
+#define ACTIONDELEGATE_P_H
 
 #include <qglobal.h>
 #include <QStyleOptionViewItem>
 
-class DeviceDelegatePrivate {
-    DeviceDelegatePrivate();
+class ActionDelegatePrivate {
+    ActionDelegatePrivate();
 
     inline qreal fontSize(const QFont &font) const;
 
@@ -18,7 +18,7 @@ class DeviceDelegatePrivate {
     int spacingHorizontal;
     int spacingVertical;
 
-    friend class DeviceDelegate;
+    friend class ActionDelegate;
 };
 
-#endif // DEVICEDELEGATE_P_H
+#endif // ACTIONDELEGATE_P_H

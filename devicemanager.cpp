@@ -56,22 +56,51 @@ void DeviceManager::isAlive() {
 }
 
 void DeviceManager::CallAction(const QModelIndex &index) const {
+    QNetworkAccessManager *mngr = new QNetworkAccessManager();
+    QEventLoop loop;
+    QObject::connect(mngr, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+
+    //get action url
     QNetworkRequest req;
-    QString url = index.data(Qt::UserRole + 2).toString();
-    req.setUrl(QUrl(url));
+    req.setUrl(QUrl(index.data(Qt::UserRole + 2).toString()));
 
-    QHttpMultiPart *http = new QHttpMultiPart();
-    QHttpPart part;
-    QByteArray qb = "coucou";
+    qDebug() << "calling action on row " << index.row();
+    qDebug() << "    with url " << req.url();
 
-    part.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"data\""));
-    part.setBody(qb);
+    QByteArray qb = "";
+    req.setHeader(QNetworkRequest::ContentDispositionHeader,
+                   QVariant("form-data; name=\"data\""));
 
-    http->append(part);
-    manager->post(req, http);
+    req.setHeader(QNetworkRequest::ContentTypeHeader,
+                  QVariant("application/json"));
 
-    //may be useless
-    delete http;
+    //QHttpMultiPart *http = new QHttpMultiPart();
+    //QHttpPart part;
+    //part.setBody(qb);
+    //http->append(part);
+
+    QNetworkReply *postReply = manager->post(req, qb);
+    loop.exec();
+
+    qDebug() << postReply->readAll();
+
+    QString state = "";
+
+    while(postReply->isFinished() == false) {
+       qDebug() << ".";
+    }
+
+    if(postReply->error()) {
+        qDebug() << "http post reply error";
+    }
+
+    qDebug() << "callaction response : state: " << state;
+
+    emit ActionCalled(index, state);
+
+    //delete http;
+    delete postReply;
+    delete mngr;
 }
 
 void DeviceManager::HandleGetConfigResponse(QNetworkReply *reply) {
@@ -82,10 +111,8 @@ void DeviceManager::HandleGetConfigResponse(QNetworkReply *reply) {
         return;
     }
 
-    QByteArray data = reply->readAll();
-
     QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(data
+    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll()
                                                 , &parseError);
 
     if(parseError.error != QJsonParseError::NoError) {

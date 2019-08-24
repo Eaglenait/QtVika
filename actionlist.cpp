@@ -34,6 +34,11 @@ void ActionList::AddActions(const Device &d) {
     }
 }
 
+void ActionList::UpdateStatusAtIndex(const QModelIndex &index, const QString &status) {
+    auto item = static_cast<QStandardItemModel *>(model())->itemFromIndex(index);
+    item->setData(status, Qt::UserRole + 2);
+}
+
 void ActionList::AddAction(const Action &a, const QString &state) {
     QString kw = "";
     foreach(const QString &o, a.syntax.Objects) {

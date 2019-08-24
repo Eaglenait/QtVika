@@ -21,29 +21,32 @@
 class DeviceManager: public QObject {
     Q_OBJECT
 public:
-    QNetworkAccessManager *manager;
     QList<Device> deviceList;
 
     explicit DeviceManager(QObject *parent = Q_NULLPTR);
     ~DeviceManager();
+
+private:
+    QNetworkAccessManager *manager;
 
 public slots:
     /// \brief Parses the response and adds the device to the devicelist
     /// - emits : DeviceManager::DeviceAdded
     void HandleGetConfigResponse(QNetworkReply *);
 
-    /// \brief Gets device config on zeroconf discover
-    void GetConfig(QZeroConfService);
-
     /// \brief Goes through the list of devices and removes those who doesn't respond
     /// - emits : DeviceMissing
     void isAlive();
+
+    /// \brief Gets device config on zeroconf discover
+    void GetConfig(QZeroConfService);
 
     /// \brief Calling an action
     void CallAction(const QModelIndex &) const;
 
 signals:
     void DeviceDiscovered(const Device &) const;
+    void ActionCalled(const QModelIndex &, const QString &) const;
 
     /// \brief Emitted on failure to respond to IsAlive request
     /// \param Addresses of non-responding devices

@@ -20,6 +20,7 @@ SOURCES += \
         devicemanager.cpp \
         main.cpp \
         mainwindow.cpp \
+        modemanager.cpp \
         syntaxhelper.cpp
 
 HEADERS += \
@@ -30,6 +31,8 @@ HEADERS += \
     device.h \
     devicemanager.h \
     mainwindow.h \
+    mode.h \
+    modemanager.h \
     syntaxhelper.h \
     vikaword.h \
 

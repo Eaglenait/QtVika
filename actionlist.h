@@ -5,7 +5,6 @@
 
 #include <QListView>
 #include <QStandardItemModel>
-#include <QUuid>
 
 #include "actiondelegate.h"
 #include "device.h"

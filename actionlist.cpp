@@ -1,7 +1,7 @@
 #include "actionlist.h"
 
-ActionList::ActionList(QWidget *parent):
-    QListView (parent)
+ActionList::ActionList(QWidget *parent)
+    : QListView(parent)
 {
     auto *actionDelegate = new ActionDelegate(this);
     QPalette p(palette());

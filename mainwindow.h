@@ -9,18 +9,25 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+#include <QMainWindow>
 
 #include "devicemanager.h"
 
-class MainWindow : public QWidget
+namespace Ui {
+    class MainWindow;
+}
+
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
 
 private:
     DeviceManager *deviceManager;
+    Ui::MainWindow *ui;
 };
 
 #endif // MAINWINDOW_H

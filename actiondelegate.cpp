@@ -35,6 +35,10 @@ void ActionDelegate::setVerticalSpacing(int spacing) const {
     m_deviceInfo->spacingVertical = spacing;
 }
 
+//todo
+//scale font on mobile
+//display correct bg
+//scale position better
 void ActionDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
    QStyleOptionViewItem opt(option);
    initStyleOption(&opt, index);
@@ -57,10 +61,9 @@ void ActionDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
    painter->setClipRect(rect);
    painter->setFont(opt.font);
 
-   //Draw background
-   painter->fillRect(rect, opt.state & QStyle::State_Selected ?
-                                                palette.highlight().color() :
-                                                palette.light().color());
+   painter->fillRect(rect, opt.state & QStyle::State_MouseOver ?
+                                palette.highlight().color()
+                              : palette.light().color());
 
    //bottom line
    painter->setPen(lastIndex ? palette.dark().color()

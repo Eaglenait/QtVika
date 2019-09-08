@@ -23,6 +23,8 @@ ActionList::ActionList(QWidget *parent):
     setFont(QFont("MSShellDlg 2", 12));
     setModel(new QStandardItemModel(this));
 
+    resize(parent->size());
+
     setItemDelegate(actionDelegate);
 }
 

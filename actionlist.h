@@ -10,7 +10,6 @@
 #include "actiondelegate.h"
 #include "device.h"
 
-
 class ActionList : public QListView
 {
     Q_OBJECT

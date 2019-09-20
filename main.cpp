@@ -8,6 +8,14 @@ int main(int argc, char *argv[]) {
 
   MainWindow w;
 
+  if(QSysInfo::productType() == "android")
+  {
+      w.setWindowFlag(Qt::MaximizeUsingFullscreenGeometryHint, true);
+
+      //QScreen s = new QScreen() ;
+      //w.size();
+  }
+
   w.show();
 
   return a.exec();

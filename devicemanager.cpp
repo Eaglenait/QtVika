@@ -17,12 +17,28 @@ DeviceManager::DeviceManager(QObject *parent)
     zeroconf->startBrowser("_vika._tcp");
     QObject::connect(zeroconf, &QZeroConf::serviceAdded,
                      this, &DeviceManager::GetConfig);
+
+    QObject::connect(zeroconf, &QZeroConf::serviceRemoved,
+                     this, &DeviceManager::RemoveDevice);
+
+    //IsAlive Timer connect
 }
 
 DeviceManager::~DeviceManager(){
     delete manager;
+
     zeroconf->stopBrowser();
     delete zeroconf;
+}
+
+void DeviceManager::RemoveDevice(QZeroConfService &service)
+{
+    for (int i = 0; i < deviceList.size(); ++i) {
+        if (deviceList[i].address == service->ip()) {
+            deviceList.removeAt(i);
+            emit DeviceMissing();
+        }
+    }
 }
 
 //Fix pls
@@ -73,11 +89,6 @@ void DeviceManager::CallAction(const QModelIndex &index) const {
 
     req.setHeader(QNetworkRequest::ContentTypeHeader,
                   QVariant("application/json"));
-
-    //QHttpMultiPart *http = new QHttpMultiPart();
-    //QHttpPart part;
-    //part.setBody(qb);
-    //http->append(part);
 
     QNetworkReply *postReply = manager->post(req, qb);
     loop.exec();

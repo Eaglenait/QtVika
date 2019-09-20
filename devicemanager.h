@@ -44,13 +44,15 @@ public slots:
     /// \brief Calling an action
     void CallAction(const QModelIndex &) const;
 
+    void RemoveDevice(QZeroConfService &service);
+
 signals:
     void DeviceDiscovered(const Device &) const;
     void ActionCalled(const QModelIndex &, const QString &) const;
 
     /// \brief Emitted on failure to respond to IsAlive request
     /// \param Addresses of non-responding devices
-    void DeviceMissing(QList<QHostAddress>) const;
+    void DeviceMissing() const;
 
 private:
     QZeroConf *zeroconf;
@@ -58,6 +60,7 @@ private:
 
     /// \brief Returns the index of the device with the given IP address
     int DeviceAddrIndexOf(const QHostAddress &) const;
+
 };
 
 #endif // DEVICEMANAGER_H

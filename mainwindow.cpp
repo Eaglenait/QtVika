@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent)
+  : QMainWindow(parent)
   , ui(new Ui::MainWindow)
 {
     deviceManager = new DeviceManager(this);
@@ -12,13 +12,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //mock data
     auto ac = QVector<Action>();
-    ac.push_back(Action(ActionType::Toggle, VikaSyntax(), "", "mock action 1"));
-    ac.push_back(Action(ActionType::Toggle, VikaSyntax(), "", "mock action 2"));
-    ac.push_back(Action(ActionType::Toggle, VikaSyntax(), "", "mock action 3"));
+    ac.push_back(Action(ActionType::Toggle, VikaSyntax(), "", "mock action"));
 
     Device d(QHostAddress(""), ac);
     actionList->AddActions(d);
-    //
 
     //Add devices actions to UI
     QObject::connect(deviceManager, &DeviceManager::DeviceDiscovered,

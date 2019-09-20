@@ -108,7 +108,6 @@ SyntaxHelper::SyntaxHelper() {
     QFile localisationFile(":/wordLists/locationWordList.json");
     QFile adjectiveFile(":/wordLists/adjectiveWordList.json");
 
-    QJsonDocument doc;
     QByteArray jsonData;
     QJsonParseError parseError;
     QJsonDocument document;
